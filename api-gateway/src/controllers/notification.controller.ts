@@ -5,12 +5,20 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
+  Headers,
 } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
+import { ApiTags, ApiOperation, ApiResponse, ApiHeader } from "@nestjs/swagger";
 import { Throttle, ThrottlerGuard } from "@nestjs/throttler";
 import { NotificationService } from "../services/notification.service";
 import { SendNotificationDto } from "../dto/send-notification.dto";
-import { CorrelationId } from "../decorators/correlation-id.decorator";
+
+interface ApiResponse {
+  success: boolean;
+  data?: any;
+  error?: string;
+  message: string;
+  meta?: any;
+}
 
 @ApiTags("notifications")
 @Controller("notifications")
@@ -20,8 +28,13 @@ export class NotificationController {
 
   @Post("send")
   @HttpCode(HttpStatus.ACCEPTED)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Throttle({ default: { limit: 100, ttl: 60000 } })
   @ApiOperation({ summary: "Send a notification to a user" })
+  @ApiHeader({
+    name: 'x-idempotency-key',
+    description: 'Idempotency key to prevent duplicate requests',
+    required: false,
+  })
   @ApiResponse({
     status: 202,
     description: "Notification request accepted and queued",
@@ -31,16 +44,25 @@ export class NotificationController {
   @ApiResponse({ status: 429, description: "Too many requests" })
   async sendNotification(
     @Body() dto: SendNotificationDto,
-    @CorrelationId() correlationId: string
-  ) {
-    await this.notificationService.sendNotification(dto, correlationId);
+    @Headers('x-idempotency-key') idempotencyKey?: string
+  ): Promise<ApiResponse> {
+    return this.notificationService.sendNotification(dto, idempotencyKey);
+  }
 
+  @Post("health")
+  @ApiOperation({ summary: "Health check for API Gateway" })
+  @ApiResponse({
+    status: 200,
+    description: "API Gateway is healthy",
+  })
+  async healthCheck(): Promise<ApiResponse> {
     return {
       success: true,
-      message: "Notification request received and is being processed",
+      message: "API Gateway is healthy",
       data: {
-        correlation_id: correlationId,
-        status: "queued",
+        service: "api-gateway",
+        status: "ok",
+        timestamp: new Date().toISOString(),
       },
     };
   }

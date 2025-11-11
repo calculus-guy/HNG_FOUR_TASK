@@ -1,11 +1,5 @@
-import {
-  IsString,
-  IsEnum,
-  IsUUID,
-  IsObject,
-  IsOptional,
-} from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
+import { IsUUID, IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
 
 export enum NotificationChannel {
   EMAIL = "email",
@@ -17,7 +11,7 @@ export class SendNotificationDto {
     description: "User ID to send notification to",
     example: "c1f7a4f0-40e1-4b1a-8fc3-2e7a3b8d6f9e",
   })
-  @IsUUID("4")
+  @IsUUID()
   user_id: string;
 
   @ApiProperty({
@@ -27,12 +21,14 @@ export class SendNotificationDto {
   })
   @IsEnum(NotificationChannel)
   channel: NotificationChannel;
-
+  // @IsEnum(['email', 'push'])
+  // channel: 'email' | 'push';
+ 
   @ApiProperty({
     description: "Template ID to use for the notification",
     example: "a2b3c4d5-e6f7-4a8b-9c1d-0e9f8a7b6c5d",
   })
-  @IsUUID("4")
+  @IsUUID()
   template_id: string;
 
   @ApiProperty({
@@ -41,5 +37,10 @@ export class SendNotificationDto {
   })
   @IsObject()
   @IsOptional()
-  context?: Record<string, any>;
+  context?: Record<string, any>
+  
+  @IsOptional()
+  @IsString()
+  correlation_id?: string;
+
 }

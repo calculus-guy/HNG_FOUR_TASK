@@ -1,13 +1,13 @@
 import { Controller, Get } from "@nestjs/common";
 import { ApiTags, ApiOperation } from "@nestjs/swagger";
-import { RabbitMQProvider } from "../queues/rabbitmq.provider";
 import { RedisService } from "../services/redis.service";
+import { RabbitMQService } from "src/services/rabbitmq.service";
 
 @ApiTags("health")
 @Controller("health")
 export class HealthController {
   constructor(
-    private readonly rabbitMQ: RabbitMQProvider,
+    private readonly rabbitMQ: RabbitMQService,
     private readonly redis: RedisService
   ) {}
 

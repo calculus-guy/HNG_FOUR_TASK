@@ -1,62 +1,59 @@
-import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
+// src/services/redis.service.ts
+import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import Redis from "ioredis";
+import Redis, { RedisOptions } from "ioredis";
 
 @Injectable()
-export class RedisService implements OnModuleInit {
+export class RedisService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(RedisService.name);
-  private client: Redis;
+  private redis: Redis;
 
   constructor(private readonly configService: ConfigService) {}
 
-  onModuleInit() {
+  async onModuleInit() {
     const host = this.configService.get<string>("REDIS_HOST", "localhost");
     const port = this.configService.get<number>("REDIS_PORT", 6379);
-
-    this.client = new Redis({
-      host,
-      port,
-      retryStrategy: (times) => {
-        const delay = Math.min(times * 50, 2000);
-        return delay;
-      },
+    this.redis = new Redis(port, host, {
+      maxRetriesPerRequest: 3,
+      retryStrategy: (times) => Math.min(times * 200, 2000),
+      connectTimeout: 10000,
+      lazyConnect: true,
     });
-
-    this.client.on("connect", () => {
-      this.logger.log("✅ Connected to Redis");
-    });
-
-    this.client.on("error", (err) => {
-      this.logger.error("Redis error:", err);
-    });
+    await this.redis.connect();
+    this.logger.log("✅ Redis connected");
   }
 
-  async get(key: string): Promise<string | null> {
-    return this.client.get(key);
+  async onModuleDestroy() {
+    if (this.redis) await this.redis.quit();
+    this.logger.log("🔌 Redis connection closed");
   }
 
   async set(key: string, value: string, ttl?: number): Promise<void> {
-    if (ttl) {
-      await this.client.setex(key, ttl, value);
-    } else {
-      await this.client.set(key, value);
-    }
+    if (ttl) await this.redis.setex(key, ttl, value);
+    else await this.redis.set(key, value);
   }
 
-  async del(key: string): Promise<void> {
-    await this.client.del(key);
+  async get(key: string): Promise<string | null> {
+    return this.redis.get(key);
+  }
+
+  async exists(key: string): Promise<boolean> {
+    return (await this.redis.exists(key)) === 1;
   }
 
   async checkIdempotency(key: string): Promise<boolean> {
-    const exists = await this.client.exists(key);
-    return exists === 1;
+    return (await this.exists(key)) === true;
   }
 
-  async setIdempotency(key: string, ttl: number): Promise<void> {
-    await this.client.setex(key, ttl, "1");
+  async setIdempotency(key: string, ttlSeconds: number): Promise<void> {
+    await this.set(key, "1", ttlSeconds);
   }
 
-  async ping(): Promise<string> {
-    return this.client.ping();
+  async ping(): Promise<boolean> {
+    try {
+      return (await this.redis.ping()) === "PONG";
+    } catch {
+      return false;
+    }
   }
 }

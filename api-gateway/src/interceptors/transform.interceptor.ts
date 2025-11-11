@@ -15,7 +15,6 @@ export class TransformInterceptor<T> implements NestInterceptor<T, any> {
         if (data && typeof data === "object" && "success" in data) {
           return data;
         }
-
         return {
           success: true,
           data,
