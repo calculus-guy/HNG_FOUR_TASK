@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+// Defines the package name for generated code 
+package template; 
+
+service TemplateService {
+  rpc GetTemplate (TemplateRequest) returns (TemplateGrpcResponse);
+}
+
+message TemplateRequest {
+  optional string template_id = 1; 
+  optional string template_code = 2; 
+}
+
+message TemplateGrpcResponse {
+  string template_id = 1;
+  string template_code = 2;
+  string subject = 3;
+  string body = 4;
+  int32 current_version = 5;
+  string language = 6;
+}
