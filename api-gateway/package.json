@@ -1,4 +1,7 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bdbac725824a60073377611e2ad88e1f66b83a9a
 {
   "name": "api-gateway",
   "version": "1.0.0",
@@ -78,5 +81,8 @@
     "testEnvironment": "node"
   }
 }
+<<<<<<< HEAD
 =======
 >>>>>>> feat/push-service
+=======
+>>>>>>> bdbac725824a60073377611e2ad88e1f66b83a9a
