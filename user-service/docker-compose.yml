@@ -1,0 +1,31 @@
+version: "3.8"
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: user_service_db
+    volumes:
+      - user_pgdata:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  user-service:
+    build: .
+    env_file:
+      - ./.env
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "4001:4000"
+    command: ["npm", "run", "start:dev"]
+
+volumes:
+  user_pgdata:
