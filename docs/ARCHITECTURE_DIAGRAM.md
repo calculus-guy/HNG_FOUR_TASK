@@ -443,10 +443,3 @@ RabbitMQ handles load distribution to workers:
 ```
 
 ---
-
-**Use this diagram for**:
-- Understanding system flow
-- Team discussions
-- Debugging issues
-- Presentation to evaluators
-- System design documentation
