@@ -65,12 +65,10 @@ export class TemplateService {
             throw new NotFoundException(`Template with ID ${id} not found.`);
         }
 
-        // Only update if content actually changed
         if (template.subject !== updateData.subject || template.body !== updateData.body) {
 
             const newVersion = template.version + 1;
 
-            // Update the main template entity
             template.subject = updateData.subject ?? template.subject;
             template.body = updateData.body ?? template.body;
             template.version = newVersion;
@@ -87,7 +85,7 @@ export class TemplateService {
 
             return template;
         }
-        return template; // Returns template if no changes
+        return template;
     }
 
     async findAll(): Promise<Template[]> {
