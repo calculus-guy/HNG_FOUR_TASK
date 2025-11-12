@@ -1,31 +1,31 @@
+
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# install deps
 COPY package*.json ./
 RUN npm ci
 
-# copy rest
 COPY . .
 
-# generate prisma client
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
 RUN npx prisma generate
 
-# build
 RUN npm run build
 
-# production image
 FROM node:20-alpine
 WORKDIR /app
 ENV NODE_ENV=production
 
 COPY package*.json ./
-RUN npm ci --production
+RUN npm ci --omit=dev
 
-# copy built files
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY prisma ./prisma
+COPY --from=builder /app/dist ./dist 
+COPY --from=builder /app/node_modules ./node_modules 
+COPY --from=builder /app/prisma ./prisma
+COPY .env .
+COPY src/modules/auth/entities/ ./src/modules/auth/entities/
 
-EXPOSE 4000
+EXPOSE 8080
+
 CMD ["node", "dist/main.js"]

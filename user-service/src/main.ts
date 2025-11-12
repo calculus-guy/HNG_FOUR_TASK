@@ -1,20 +1,22 @@
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
+import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { RolesGuard } from './common/guards/roles.guard';
 import * as morgan from 'morgan';
+import { v4 as uuidv4 } from 'uuid';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
-  // Generate correlation_id per request
+  // Correlation ID middleware
   app.use((req, res, next) => {
     req.correlation_id = uuidv4();
     res.setHeader('x-correlation-id', req.correlation_id);
     next();
   });
 
-  // Logging middleware
+  // Morgan request logger
   app.use(
     morgan(':method :url :status - :response-time ms :res[x-correlation-id]', {
       stream: {
@@ -32,10 +34,13 @@ async function bootstrap() {
     }),
   );
 
-  const port = process.env.PORT || 8;
+  // Global guards (JWT + Roles)
+  const reflector = app.get(Reflector);
+  app.useGlobalGuards(new JwtAuthGuard(), new RolesGuard(reflector));
+
+  const port = process.env.PORT || 4001;
   await app.listen(port);
   console.log(`[USER_SERVICE] running on port ${port}`);
 }
-bootstrap();
 
-// git push origin feature/user-service
+bootstrap();

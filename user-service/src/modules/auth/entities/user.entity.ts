@@ -3,23 +3,23 @@ import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateCol
 @Entity('users')
 export class UserEntity {
   @PrimaryGeneratedColumn('uuid')
-  user_id: string;
+  user_id!: string;
 
   @Column({ unique: true })
-  email: string;
+  email!: string;
 
   @Column()
-  password_hash: string;
+  password_hash!: string;
 
   @Column({ nullable: true })
-  full_name: string;
+  full_name!: string;
 
   @Column({ default: 'user' })
-  role: string;
+  role!: string;
 
   @CreateDateColumn()
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn()
-  updated_at: Date;
+  updated_at!: Date;
 }

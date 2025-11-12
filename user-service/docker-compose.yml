@@ -17,7 +17,10 @@ services:
       - "6379:6379"
 
   user-service:
-    build: .
+    build: 
+      context: .
+      args:
+        - DATABASE_URL=${DATABASE_URL}
     env_file:
       - ./.env
     depends_on:
