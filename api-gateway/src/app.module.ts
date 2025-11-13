@@ -3,6 +3,7 @@ import { ConfigModule } from "@nestjs/config";
 import { ThrottlerModule } from "@nestjs/throttler";
 import { NotificationController } from "./controllers/notification.controller";
 import { HealthController } from "./controllers/health.controller";
+import { NotificationStatusController } from "./controllers/notification-status.controller";
 import { NotificationService } from "./services/notification.service";
 import { RedisService } from "./services/redis.service";
 import { UserGrpcClient } from "./clients/user-grpc.client";
@@ -22,7 +23,7 @@ import { RabbitMQService } from "./services/rabbitmq.service";
       },
     ]),
   ],
-  controllers: [NotificationController, HealthController],
+  controllers: [NotificationController, HealthController, NotificationStatusController],
   providers: [
     NotificationService,
     RabbitMQService,
