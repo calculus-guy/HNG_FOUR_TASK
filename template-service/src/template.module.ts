@@ -17,7 +17,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
                 type: 'postgres',
                 url: config.get<string>('DATABASE_URL_TEMPLATE'),
                 entities: [Template, TemplateVersion],
-                synchronize: false,
+                synchronize: true,
                 autoLoadEntities: true,
             }),
         }),
