@@ -18,8 +18,8 @@ Follow these instructions to get the project up and running on your local machin
 
 1.  **Clone the Repository**:
     ```bash
-    git clone https://github.com/your-username/distributed-notification-system.git
-    cd distributed-notification-system
+    git clone https://github.com/calculus-guy/HNG_FOUR_TASK.git
+    cd HNG_FOUR_TASK.git
     ```
 
 2.  **Create Environment File**:
@@ -54,7 +54,7 @@ USER_SERVICE_PORT=3001
 TEMPLATE_SERVICE_DATABASE_URL=postgres://user:password@postgres:5432/template_db
 TEMPLATE_SERVICE_PORT=3002
 
-# Email Service (using Mailtrap for example)
+# Email Service (e.g with Mailtrap )
 SMTP_HOST=smtp.mailtrap.io
 SMTP_PORT=2525
 SMTP_USER=your_mailtrap_user

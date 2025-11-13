@@ -6,8 +6,8 @@ services:
     image: postgres:15-alpine
     container_name: notification-postgres
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
       POSTGRES_DB: ${POSTGRES_DB:-notifications_db}
     ports:
       - "5432:5432"
@@ -17,7 +17,7 @@ services:
     networks:
       - notification-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -26,8 +26,8 @@ services:
     image: rabbitmq:3.12-management-alpine
     container_name: notification-rabbitmq
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-admin}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-admin123}
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -57,58 +57,15 @@ services:
       retries: 5
 
   # Microservices
-  api-gateway:
-    build:
-      context: ./api-gateway
-      dockerfile: Dockerfile
-    container_name: notification-api-gateway
-    ports:
-      - "${API_GATEWAY_PORT:-3000}:3000"
-    environment:
-      - NODE_ENV=${NODE_ENV:-development}
-      - PORT=3000
-      - RABBITMQ_URL=${RABBITMQ_URL:-amqp://guest:guest@rabbitmq:5672}
-      - REDIS_HOST=${REDIS_HOST:-redis}
-      - REDIS_PORT=${REDIS_PORT:-6379}
-      - USER_SERVICE_HOST=user-service
-      - USER_SERVICE_PORT=3001
-      - USER_SERVICE_GRPC_PORT=50051
-      - TEMPLATE_SERVICE_HOST=template-service
-      - TEMPLATE_SERVICE_PORT=3002
-      - TEMPLATE_SERVICE_GRPC_PORT=50052
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      user-service:
-        condition: service_started
-      template-service:
-        condition: service_started
-    networks:
-      - notification-network
-    restart: unless-stopped
-
   user-service:
     build:
       context: ./user-service
       dockerfile: Dockerfile
-    container_name: notification-user-service
+    container_name: user-service
+    env_file:
+      - ./user-service/.env
     ports:
-      - "${USER_SERVICE_PORT:-3001}:3001"
-      - "${USER_SERVICE_GRPC_PORT:-50051}:50051"
-    environment:
-      - NODE_ENV=${NODE_ENV:-development}
-      - PORT=3001
-      - GRPC_PORT=50051
-      - DATABASE_URL=${USER_SERVICE_DATABASE_URL:-postgres://user:password@postgres:5432/user_db}
-      - DATABASE_HOST=${USER_SERVICE_DATABASE_HOST:-postgres}
-      - DATABASE_PORT=${USER_SERVICE_DATABASE_PORT:-5432}
-      - DATABASE_NAME=${USER_SERVICE_DATABASE_NAME:-user_db}
-      - DATABASE_USER=${USER_SERVICE_DATABASE_USER:-user}
-      - DATABASE_PASSWORD=${USER_SERVICE_DATABASE_PASSWORD:-password}
-      - REDIS_HOST=${REDIS_HOST:-redis}
-      - REDIS_PORT=${REDIS_PORT:-6379}
+      - "4001:4000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -116,59 +73,70 @@ services:
         condition: service_healthy
     networks:
       - notification-network
-    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   template-service:
     build:
       context: ./template-service
       dockerfile: Dockerfile
-    container_name: notification-template-service
+    container_name: template-service
+    env_file:
+      - ./template-service/.env
     ports:
-      - "${TEMPLATE_SERVICE_PORT:-3002}:3002"
-      - "${TEMPLATE_SERVICE_GRPC_PORT:-50052}:50052"
-    environment:
-      - NODE_ENV=${NODE_ENV:-development}
-      - PORT=3002
-      - GRPC_PORT=50052
-      - DATABASE_URL=${TEMPLATE_SERVICE_DATABASE_URL:-postgres://user:password@postgres:5432/template_db}
-      - DATABASE_HOST=${TEMPLATE_SERVICE_DATABASE_HOST:-postgres}
-      - DATABASE_PORT=${TEMPLATE_SERVICE_DATABASE_PORT:-5432}
-      - DATABASE_NAME=${TEMPLATE_SERVICE_DATABASE_NAME:-template_db}
-      - DATABASE_USER=${TEMPLATE_SERVICE_DATABASE_USER:-user}
-      - DATABASE_PASSWORD=${TEMPLATE_SERVICE_DATABASE_PASSWORD:-password}
-      - REDIS_HOST=${REDIS_HOST:-redis}
-      - REDIS_PORT=${REDIS_PORT:-6379}
+      - "4002:4002"
     depends_on:
       postgres:
+        condition: service_healthy
+    networks:
+      - notification-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4002/api/v1/templates/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    env_file:
+      - ./api-gateway/.env
+    ports:
+      - "3000:3000"
+    depends_on:
+      user-service:
+        condition: service_healthy
+      template-service:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
       redis:
         condition: service_healthy
     networks:
       - notification-network
-    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   email-service:
     build:
       context: ./email-service
       dockerfile: Dockerfile
-    container_name: notification-email-service
+    container_name: email-service
+    env_file:
+      - ./email-service/.env
     ports:
-      - "${EMAIL_SERVICE_PORT:-3003}:3003"
-    environment:
-      - NODE_ENV=${NODE_ENV:-development}
-      - PORT=3003
-      - RABBITMQ_URL=${RABBITMQ_URL:-amqp://guest:guest@rabbitmq:5672}
-      - SMTP_HOST=${SMTP_HOST}
-      - SMTP_PORT=${SMTP_PORT}
-      - SMTP_USER=${SMTP_USER}
-      - SMTP_PASS=${SMTP_PASS}
-      - SMTP_SECURE=${SMTP_SECURE:-false}
-      - EMAIL_FROM=${EMAIL_FROM}
-      - EMAIL_FROM_NAME=${EMAIL_FROM_NAME}
-      - REDIS_HOST=${REDIS_HOST:-redis}
-      - REDIS_PORT=${REDIS_PORT:-6379}
-      - MAX_RETRY_ATTEMPTS=${MAX_RETRY_ATTEMPTS:-3}
-      - RETRY_DELAY_MS=${RETRY_DELAY_MS:-1000}
+      - "4003:4003"
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -176,25 +144,22 @@ services:
         condition: service_healthy
     networks:
       - notification-network
-    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   push-service:
     build:
       context: ./push-service
       dockerfile: Dockerfile
-    container_name: notification-push-service
+    container_name: push-service
+    env_file:
+      - ./push-service/.env
     ports:
-      - "${PUSH_SERVICE_PORT:-3004}:3004"
-    environment:
-      - NODE_ENV=${NODE_ENV:-development}
-      - PORT=3004
-      - RABBITMQ_URL=${RABBITMQ_URL:-amqp://guest:guest@rabbitmq:5672}
-      - FCM_SERVER_KEY=${FCM_SERVER_KEY}
-      - FCM_PROJECT_ID=${FCM_PROJECT_ID}
-      - REDIS_HOST=${REDIS_HOST:-redis}
-      - REDIS_PORT=${REDIS_PORT:-6379}
-      - MAX_RETRY_ATTEMPTS=${MAX_RETRY_ATTEMPTS:-3}
-      - RETRY_DELAY_MS=${RETRY_DELAY_MS:-1000}
+      - "4004:4004"
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -202,13 +167,18 @@ services:
         condition: service_healthy
     networks:
       - notification-network
-    restart: unless-stopped
-
-networks:
-  notification-network:
-    driver: bridge
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 volumes:
   postgres-data:
   rabbitmq-data:
   redis-data:
+
+networks:
+  notification-network:
+    driver: bridge

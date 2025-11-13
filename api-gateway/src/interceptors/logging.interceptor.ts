@@ -8,17 +8,18 @@ import {
 import { Observable } from "rxjs";
 import { tap } from "rxjs/operators";
 import { v4 as uuidv4 } from "uuid";
+import { FastifyRequest } from "fastify";
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
   private readonly logger = new Logger("HTTP");
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<FastifyRequest>();
     const { method, url } = request;
-    const correlationId = request.headers["x-correlation-id"] || uuidv4();
+    const correlationId = request.headers["x-correlation-id"] as string || uuidv4();
 
-    request.correlationId = correlationId;
+    (request as any).correlationId = correlationId;
 
     const now = Date.now();
 

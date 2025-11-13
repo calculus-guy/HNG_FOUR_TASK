@@ -38,6 +38,7 @@ async function bootstrap() {
   logger.info(`Health check available at http://localhost:${port}/api/v1/health`);
   logger.info(`Metrics available at http://localhost:${port}/api/v1/metrics`);
   logger.info(`Swagger documentation available at http://localhost:${port}/api/v1/docs`);
+  logger.info(`Swagger documentation available at http://localhost:${port}/api/docs`);
 }
 
 bootstrap().catch((error) => {

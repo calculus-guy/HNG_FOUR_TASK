@@ -1,29 +1,16 @@
-FROM node:18-alpine AS development
+# Development Dockerfile
+FROM node:18-alpine
 
 WORKDIR /app
 
+# Install dependencies
 COPY package*.json ./
+RUN npm install
 
-RUN npm ci
-
+# Copy source code
 COPY . .
-
-RUN npm run build
-
-FROM node:18-alpine AS production
-
-ARG NODE_ENV=production
-ENV NODE_ENV=${NODE_ENV}
-
-WORKDIR /app
-
-COPY package*.json ./
-
-RUN npm ci --only=production
-
-COPY --from=development /app/dist ./dist
-COPY --from=development /app/proto ./proto
 
 EXPOSE 3000
 
-CMD ["node", "dist/main"]
+# Start in development mode
+CMD ["npm", "run", "start:dev"]
