@@ -35,8 +35,8 @@ async function bootstrap() {
   await app.listen(port, '0.0.0.0');
   
   logger.info(`Email Service started successfully on port ${port}`);
-  logger.info(`Health check available at http://localhost:${port}/health`);
-  logger.info(`Metrics available at http://localhost:${port}/metrics`);
+  logger.info(`Health check available at http://localhost:${port}/api/v1/health`);
+  logger.info(`Metrics available at http://localhost:${port}/api/v1/metrics`);
   logger.info(`Swagger documentation available at http://localhost:${port}/api/docs`);
 }
 
