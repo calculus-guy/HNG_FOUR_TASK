@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package user;
+
+service UserService {
+  rpc GetUserById (GetUserRequest) returns (GetUserResponse);
+}
+
+message GetUserRequest {
+  string id = 1;
+}
+
+message GetUserResponse {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+  string fcm_token = 4;
+  bool email_enabled = 5;
+  bool push_enabled = 6;
+  string quiet_hours_start = 7;
+  string quiet_hours_end = 8;
+}
