@@ -9,16 +9,9 @@ import { RedisService } from "./redis.service";
 import { UserGrpcClient } from "../clients/user-grpc.client";
 import { TemplateGrpcClient } from "../clients/template-grpc.client";
 import { SendNotificationDto } from "../dto/send-notification.dto";
+import { StandardResponse, createResponse } from "../dto/standard-response.dto";
 import { v4 as uuidv4 } from "uuid";
 import { RabbitMQService } from "./rabbitmq.service";
-
-interface StandardApiResponse {
-  success: boolean;
-  data?: any;
-  error?: string;
-  message: string;
-  meta?: any;
-}
 
 @Injectable()
 export class NotificationService {
@@ -34,7 +27,7 @@ export class NotificationService {
   async sendNotification(
     dto: SendNotificationDto,
     idempotencyKey?: string
-  ): Promise<StandardApiResponse> {
+  ): Promise<StandardResponse> {
     // Generate request_id if not provided
     const requestId = dto.request_id || `req_${uuidv4()}`;
     const correlationId = dto.correlation_id || uuidv4();
@@ -104,18 +97,31 @@ export class NotificationService {
 
     this.logger.log(`[${correlationId}] Notification queued successfully: ${requestId}`);
 
-    return {
-      success: true,
-      message: "Notification queued successfully",
-      data: { 
+    // Store initial status
+    const statusKey = `notification:status:${requestId}`;
+    await this.redis.set(
+      statusKey,
+      JSON.stringify({
+        status: 'pending',
+        timestamp: new Date().toISOString(),
+        user_id: dto.user_id,
+        notification_type: dto.notification_type,
+      }),
+      604800 // 7 days
+    );
+
+    return createResponse(
+      true,
+      "Notification queued successfully",
+      { 
         request_id: requestId,
         correlation_id: correlationId, 
         user_id: dto.user_id, 
         notification_type: dto.notification_type,
-        status: "queued",
+        status: "pending",
         timestamp: new Date().toISOString()
-      },
-    };
+      }
+    );
   }
 
   private async getUserWithCache(userId: string): Promise<any> {
