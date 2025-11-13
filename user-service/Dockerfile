@@ -1,31 +1,23 @@
+FROM node:20-alpine
 
-FROM node:20-alpine AS builder
 WORKDIR /app
 
+# Copy package files
 COPY package*.json ./
-RUN npm ci
+COPY prisma ./prisma/
 
-COPY . .
+# Install dependencies
+RUN npm install
 
-ARG DATABASE_URL
-ENV DATABASE_URL=$DATABASE_URL
+# Generate Prisma client with dummy URL (will use real one at runtime)
+ENV DATABASE_URL="postgresql://postgres:postgres@localhost:5432/temp"
 RUN npx prisma generate
 
-RUN npm run build
+# Copy source files
+COPY . .
 
-FROM node:20-alpine
-WORKDIR /app
-ENV NODE_ENV=production
+# Expose port
+EXPOSE 4000
 
-COPY package*.json ./
-RUN npm ci --omit=dev
-
-COPY --from=builder /app/dist ./dist 
-COPY --from=builder /app/node_modules ./node_modules 
-COPY --from=builder /app/prisma ./prisma
-COPY .env .
-COPY src/modules/auth/entities/ ./src/modules/auth/entities/
-
-EXPOSE 8080
-
-CMD ["node", "dist/main.js"]
+# Start in development mode
+CMD ["npm", "run", "start:dev"]

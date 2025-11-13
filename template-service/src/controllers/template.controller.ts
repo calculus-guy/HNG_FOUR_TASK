@@ -7,7 +7,7 @@ import { TemplateResponse, toTemplateData } from '../dto/template-response.dto';
 import { HealthCheckResponse } from '../dto/health-check.dto';
 
 @ApiTags('templates')
-@Controller('api/v1/templates')
+@Controller('templates')
 export class TemplateController {
     constructor(private readonly templateService: TemplateService) { }
 
@@ -32,6 +32,18 @@ export class TemplateController {
         return {
             success: true,
             message: 'Template created successfully.',
+            data: toTemplateData(template),
+        };
+    }
+
+    @Get('by-name/:name')
+    @ApiOperation({ summary: 'Get template by name' })
+    @ApiResponse({ status: 200, type: TemplateResponse })
+    async findByName(@Param('name') name: string): Promise<TemplateResponse> {
+        const template = await this.templateService.getTemplateByName(name);
+        return {
+            success: true,
+            message: 'Template retrieved successfully.',
             data: toTemplateData(template),
         };
     }

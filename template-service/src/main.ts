@@ -10,8 +10,8 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 async function bootstrap() {
-    const PORT_HTTP = process.env.PORT_HTTP || 3002;
-    const PORT_GRPC = process.env.PORT_GRPC || 50052;
+    const PORT_HTTP = process.env.PORT || 4002;
+    const PORT_GRPC = process.env.GRPC_PORT || 50052;
 
 
     const app = await NestFactory.create(TemplateModule);
