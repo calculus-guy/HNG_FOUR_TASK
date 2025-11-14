@@ -2,12 +2,12 @@ import { Entity, Column, PrimaryGeneratedColumn, Index, OneToMany } from 'typeor
 import { TemplateVersion } from './template-version.entity';
 
 @Entity('templates')
-@Index(['name'], { unique: true })
+@Index(['name', 'language'], { unique: true })
 export class Template {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @Column({ length: 255, unique: true })
+    @Column({ length: 255 })
     name: string;
 
     @Column({ length: 500, nullable: true })

@@ -1,7 +1,22 @@
-import { IsEmail, IsNotEmpty, MinLength } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsEmail, IsNotEmpty, MinLength, IsOptional, IsBoolean, ValidateNested } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+
+export class UserPreferenceDto {
+  @ApiProperty({ example: true, description: 'Enable email notifications' })
+  @IsBoolean()
+  email!: boolean;
+
+  @ApiProperty({ example: true, description: 'Enable push notifications' })
+  @IsBoolean()
+  push!: boolean;
+}
 
 export class RegisterDto {
+  @ApiProperty({ example: 'John Doe', description: 'User full name' })
+  @IsNotEmpty()
+  name!: string;
+
   @ApiProperty({ example: 'user@example.com', description: 'User email address' })
   @IsEmail()
   email!: string;
@@ -11,7 +26,13 @@ export class RegisterDto {
   @MinLength(6)
   password!: string;
 
-  @ApiProperty({ example: 'John Doe', description: 'User full name' })
+  @ApiPropertyOptional({ example: 'fcm-token-123...', description: 'Firebase Cloud Messaging push token' })
+  @IsOptional()
   @IsNotEmpty()
-  full_name!: string;
+  push_token?: string;
+
+  @ApiProperty({ type: UserPreferenceDto, description: 'User notification preferences' })
+  @ValidateNested()
+  @Type(() => UserPreferenceDto)
+  preferences!: UserPreferenceDto;
 }

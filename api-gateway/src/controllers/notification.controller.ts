@@ -34,6 +34,23 @@ export interface StandardApiResponse<T = any> {
 export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
 
+  @Post()
+  @HttpCode(HttpStatus.ACCEPTED)
+  @Throttle({ default: { limit: 100, ttl: 60000 } })
+  @ApiOperation({ summary: "Send a notification (alias of /send)" })
+  @ApiHeader({
+    name: 'x-idempotency-key',
+    description: 'Idempotency key to prevent duplicate requests',
+    required: false,
+  })
+  @ApiResponse({ status: 202, description: "Notification request accepted and queued" })
+  async sendNotificationAlias(
+    @Body() dto: SendNotificationDto,
+    @Headers('x-idempotency-key') idempotencyKey?: string
+  ): Promise<StandardApiResponse> {
+    return this.notificationService.sendNotification(dto, idempotencyKey);
+  }
+
   @Post("send")
   @HttpCode(HttpStatus.ACCEPTED)
   @Throttle({ default: { limit: 100, ttl: 60000 } })

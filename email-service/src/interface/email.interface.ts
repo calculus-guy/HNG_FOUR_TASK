@@ -1,5 +1,6 @@
 export interface EmailMessage {
   correlation_id: string;
+  request_id?: string;
   user_id: string;
   template_id: string;
   channel: 'email';

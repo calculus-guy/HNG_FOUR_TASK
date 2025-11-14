@@ -8,7 +8,7 @@ import { EmailConsumer } from '../consumer/email.consumer';
 import { logger } from '../utils/logger';
 
 @ApiTags('health')
-@Controller('health')
+@Controller('email/health')
 export class HealthController {
   constructor(
     private readonly emailService: EmailService,

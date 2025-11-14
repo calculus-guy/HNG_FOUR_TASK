@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Body, Param, Patch, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { TemplateService } from '../services/template.service';
 import { CreateTemplateDto } from '../dto/create-template.dto';
 import { UpdateTemplateDto } from '../dto/update-template.dto';
 import { TemplateResponse, toTemplateData } from '../dto/template-response.dto';
 import { HealthCheckResponse } from '../dto/health-check.dto';
+import { RenderTemplateDto, RenderTemplateResponse } from '../dto/render-template.dto';
 
 @ApiTags('templates')
 @Controller('templates')
@@ -39,8 +40,8 @@ export class TemplateController {
     @Get('by-name/:name')
     @ApiOperation({ summary: 'Get template by name' })
     @ApiResponse({ status: 200, type: TemplateResponse })
-    async findByName(@Param('name') name: string): Promise<TemplateResponse> {
-        const template = await this.templateService.getTemplateByName(name);
+    async findByName(@Param('name') name: string, @Query('lang') lang?: string): Promise<TemplateResponse> {
+        const template = await this.templateService.getTemplateByName(name, lang);
         return {
             success: true,
             message: 'Template retrieved successfully.',
@@ -70,5 +71,26 @@ export class TemplateController {
             message: 'Template updated and new version saved successfully.',
             data: toTemplateData(template),
         };
+    }
+
+    @Get(':id/versions')
+    @ApiOperation({ summary: 'List all versions for a template' })
+    @ApiResponse({ status: 200, description: 'Array of version records' })
+    async versions(@Param('id') id: string) {
+        const versions = await this.templateService.getVersionsByTemplateId(id);
+        return { success: true, data: versions };
+    }
+
+    @Post('render')
+    @ApiOperation({ summary: 'Render a template with variables' })
+    @ApiResponse({ status: 200, type: RenderTemplateResponse })
+    async render(@Body() dto: RenderTemplateDto): Promise<RenderTemplateResponse> {
+        const rendered = await this.templateService.renderTemplate({
+            template_id: dto.template_id,
+            template_name: dto.template_name,
+            language: dto.language,
+            variables: dto.variables,
+        });
+        return { success: true, data: rendered };
     }
 }

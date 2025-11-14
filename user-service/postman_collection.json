@@ -1,0 +1,83 @@
+{
+  "info": {
+    "name": "User Service",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "2c2d9d2e-5c9a-4d1a-9f8a-0e1e9c2f9a11"
+  },
+  "item": [
+    {
+      "name": "Register User (alias)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/users",
+          "host": ["{{baseUrl}}"],
+          "path": ["users"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Jane Doe\",\n  \"email\": \"jane@example.com\",\n  \"password\": \"Password123!\",\n  \"preferences\": { \"email\": true, \"push\": true },\n  \"push_token\": \"OPTIONAL_FCM_TOKEN\"\n}"
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Register User",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/users/register",
+          "host": ["{{baseUrl}}"],
+          "path": ["users","register"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"Password123!\",\n  \"preferences\": { \"email\": true, \"push\": true }\n}"
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get User by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/users/{{userId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["users","{{userId}}"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Update Push Token",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/users/{{userId}}/push-token",
+          "host": ["{{baseUrl}}"],
+          "path": ["users","{{userId}}","push-token"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"push_token\": \"PASTE_FCM_TOKEN_HERE\"\n}"
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4001/api/v1" },
+    { "key": "userId", "value": "REPLACE_WITH_USER_ID" }
+  ]
+}

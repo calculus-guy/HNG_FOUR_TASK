@@ -61,23 +61,30 @@ export class RabbitMQProvider implements OnModuleInit, OnModuleDestroy {
       }
       this.connection = await amqplib.connect(rabbitmqConfig.url);
       this.channel = await this.connection.createConfirmChannel();
-      await this.channel.assertExchange(rabbitmqConfig.exchange, 'direct', { 
-        durable: true 
-      });
+      await this.channel.assertExchange(rabbitmqConfig.exchange, 'direct', { durable: true });
+
+      // Ensure the queue exists before binding
+      await this.channel.assertQueue(rabbitmqConfig.queue, { durable: true });
+
+      // Match the API Gateway routing keys (notification.email)
+      const routingKey = 'notification.email';
+
       try {
         await this.channel.bindQueue(
-          rabbitmqConfig.queue, 
-          rabbitmqConfig.exchange, 
-          'email'
+          rabbitmqConfig.queue,
+          rabbitmqConfig.exchange,
+          routingKey,
         );
         logger.info('Queue bound to exchange successfully', {
           queue: rabbitmqConfig.queue,
           exchange: rabbitmqConfig.exchange,
+          routingKey,
         });
       } catch (bindError) {
         logger.info('Queue binding may already exist', {
           queue: rabbitmqConfig.queue,
           exchange: rabbitmqConfig.exchange,
+          routingKey,
         });
       }
       this.connection.on('error', (err: Error) => {

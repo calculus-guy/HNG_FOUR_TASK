@@ -60,7 +60,8 @@ export class RabbitMQProvider implements OnModuleInit, OnModuleDestroy {
         durable: true,
       });
 
-      await channel.bindQueue(this.PUSH_QUEUE, this.EXCHANGE_NAME, 'push');
+      // Bind to routing key used by API Gateway
+      await channel.bindQueue(this.PUSH_QUEUE, this.EXCHANGE_NAME, 'notification.push');
       await channel.bindQueue(this.FAILED_QUEUE, this.EXCHANGE_NAME, 'failed');
 
       channel.prefetch(1);
@@ -211,7 +212,7 @@ export class RabbitMQProvider implements OnModuleInit, OnModuleDestroy {
           if (this.channel) {
             this.channel.publish(
               this.EXCHANGE_NAME,
-              'push',
+              'notification.push',
               msg.content,
               {
                 persistent: true,

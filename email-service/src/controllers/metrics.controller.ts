@@ -5,7 +5,7 @@ import { RedisService } from '../services/redis.service';
 import { EmailService } from '../services/email.service';
 
 @ApiTags('metrics')
-@Controller('metrics')
+@Controller('email/metrics')
 export class MetricsController {
   constructor(
     private readonly redisService: RedisService,

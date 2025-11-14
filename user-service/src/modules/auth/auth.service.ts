@@ -25,7 +25,9 @@ export class AuthService {
     const user = this.userRepository.create({
       email: payload.email,
       password_hash,
-      full_name: payload.full_name,
+      full_name: payload.name,
+      fcm_token: payload.push_token || null,
+      preferences: payload.preferences,
     });
 
     await this.userRepository.save(user);
@@ -34,6 +36,8 @@ export class AuthService {
       message: 'User registered successfully',
       user_id: user.user_id,
       email: user.email,
+      name: user.full_name,
+      preferences: user.preferences,
     };
   }
 

@@ -71,9 +71,13 @@ export class EmailConsumer implements OnModuleInit, OnModuleDestroy {
   private async processMessage(msg: ConsumeMessage): Promise<void> {
     const correlationId = msg.properties.messageId || 'unknown';
     const channel = this.rabbitMQProvider.getChannel();
+    let statusId = correlationId;
     
     try {
       const emailMessage: EmailMessage = JSON.parse(msg.content.toString());
+      if (emailMessage.request_id) {
+        statusId = emailMessage.request_id;
+      }
       
       // Check for duplicate processing
       if (await this.checkDuplicate(emailMessage.correlation_id)) {
@@ -90,8 +94,8 @@ export class EmailConsumer implements OnModuleInit, OnModuleDestroy {
         templateId: emailMessage.template_id,
       });
 
-      // Report processing status
-      await this.reportStatus(emailMessage.correlation_id, 'processing');
+      // Optionally report processing status (kept as internal log)
+      await this.reportStatus(statusId, 'processing');
 
       // Process the email with retry logic
       const result = await this.processEmailWithRetry(emailMessage);
@@ -103,7 +107,7 @@ export class EmailConsumer implements OnModuleInit, OnModuleDestroy {
         await this.markAsProcessed(emailMessage.correlation_id);
         
         // Report success status
-        await this.reportStatus(emailMessage.correlation_id, 'delivered', {
+        await this.reportStatus(statusId, 'delivered', {
           messageId: result.messageId,
         });
         
@@ -114,7 +118,7 @@ export class EmailConsumer implements OnModuleInit, OnModuleDestroy {
       } else {
         await channel.nack(msg, false, false);
         
-        await this.reportStatus(emailMessage.correlation_id, 'failed', {
+        await this.reportStatus(statusId, 'failed', {
           error: result.error,
           final_attempt: true,
         });
@@ -130,7 +134,7 @@ export class EmailConsumer implements OnModuleInit, OnModuleDestroy {
         error: error instanceof Error ? error.message : 'Unknown error',
       });
       
-      await this.reportStatus(correlationId, 'failed', {
+      await this.reportStatus(statusId, 'failed', {
         error: error instanceof Error ? error.message : 'Unknown error',
       });
       await channel.nack(msg, false, false);
@@ -226,6 +230,30 @@ export class EmailConsumer implements OnModuleInit, OnModuleDestroy {
         ...additionalData,
       };
       logger.info('Status report', statusPayload);
+
+      // Only POST back to gateway for terminal states to reduce noise
+      if (status === 'delivered' || status === 'failed') {
+        const baseUrl = process.env.API_GATEWAY_URL || 'http://api-gateway:3000';
+        const url = `${baseUrl}/api/v1/email/status`;
+        try {
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              notification_id: notificationId,
+              status,
+              timestamp: statusPayload.timestamp,
+              error: (additionalData && additionalData.error) || undefined,
+            }),
+          });
+          if (!res.ok) {
+            const text = await res.text().catch(() => '');
+            logger.warn('Gateway status POST failed', { status: res.status, body: text });
+          }
+        } catch (err) {
+          logger.warn('Failed to POST status to gateway', { error: err instanceof Error ? err.message : 'Unknown error' });
+        }
+      }
 
     } catch (error) {
       logger.warn('Failed to report status', {

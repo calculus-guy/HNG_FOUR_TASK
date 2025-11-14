@@ -1,5 +1,5 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsUUID, IsEnum, IsObject, IsOptional, IsString, IsNumber, Min, Max } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { IsUUID, IsEnum, IsObject, IsOptional, IsString, IsInt, Min, Max } from 'class-validator';
 
 export enum NotificationType {
   EMAIL = "email",
@@ -53,6 +53,15 @@ export class SendNotificationDto {
   @IsOptional()
   context?: Record<string, any>;
 
+  @ApiPropertyOptional({
+    description: "Alias of context; to match external spec",
+    example: { name: "John Doe" },
+    required: false,
+  })
+  @IsObject()
+  @IsOptional()
+  variables?: Record<string, any>;
+
   @ApiProperty({
     description: "Priority level for notification delivery",
     enum: NotificationPriority,
@@ -62,6 +71,19 @@ export class SendNotificationDto {
   @IsEnum(NotificationPriority)
   @IsOptional()
   priority?: NotificationPriority;
+
+  @ApiPropertyOptional({
+    description: "Numeric priority (1-10) accepted as an alternative",
+    example: 5,
+    minimum: 1,
+    maximum: 10,
+    required: false,
+  })
+  @IsInt()
+  @Min(1)
+  @Max(10)
+  @IsOptional()
+  priority_num?: number;
 
   @ApiProperty({
     description: "Additional metadata for tracking and analytics",

@@ -9,10 +9,20 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 
-@ApiTags('auth')
-@Controller('auth')
+@ApiTags('users')
+@Controller('users')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Post()
+  @Public()
+  @ApiOperation({ summary: 'Create a new user (alias of register)' })
+  @ApiBody({ type: RegisterDto })
+  @ApiResponse({ status: 201, description: 'User successfully created' })
+  @ApiResponse({ status: 400, description: 'Bad request - validation error' })
+  async create(@Body() payload: RegisterDto) {
+    return this.authService.register(payload);
+  }
 
   @Post('register')
   @Public()

@@ -30,9 +30,13 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  const port = process.env.PORT ?? 3003;
+  // Global API prefix
+  app.setGlobalPrefix('api/v1');
+
+  const port = process.env.PORT ?? 3004;
   await app.listen(port);
   console.log(`Push notification service is running on port ${port}`);
+  console.log(`Health: http://localhost:${port}/api/v1/push/health`);
   console.log(`Swagger documentation available at http://localhost:${port}/api/docs`);
 }
 bootstrap();

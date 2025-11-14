@@ -1,0 +1,20 @@
+{
+  "info": {
+    "name": "Email Service",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "e1d3f8c9-7c2b-4b5a-8c73-0f3b14d02b2e"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4003/api/v1" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/email/health", "host": ["{{baseUrl}}"], "path": ["email","health"] } }
+    },
+    {
+      "name": "Metrics",
+      "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/email/metrics", "host": ["{{baseUrl}}"], "path": ["email","metrics"] } }
+    }
+  ]
+}

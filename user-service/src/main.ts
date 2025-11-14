@@ -66,6 +66,9 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
+  // Global API prefix
+  app.setGlobalPrefix('api/v1');
+
   const port = process.env.PORT || 4001;
   await app.listen(port);
   console.log(`[USER_SERVICE] running on port ${port}`);

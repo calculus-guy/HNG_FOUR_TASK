@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>FCM Web Token Generator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Firebase CDN (Compat builds for simplicity) -->
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-messaging-compat.js"></script>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; max-width: 760px; margin: 32px auto; padding: 0 16px;}
+    pre { background: #f6f8fa; padding: 12px; border-radius: 6px; overflow: auto;}
+    .row { margin: 10px 0;}
+    input, button { padding: 8px; font-size: 14px;}
+    label { display: block; font-weight: 600; margin-bottom: 6px;}
+  </style>
+</head>
+<body>
+  <h1>FCM Web Token Generator</h1>
+
+  <div class="row">
+    <label>Firebase Web Config (from Project Settings → General → Your apps → Web app)</label>
+    <pre id="config-hint">
+// Replace everything below with your actual config from Firebase Console
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.web.app",
+  projectId: "push-service-2a2ab",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+const VAPID_KEY = "YOUR_WEB_PUSH_CERTIFICATE_KEY_PAIR_PUBLIC_KEY"; // from Firebase Console → Cloud Messaging → Web push certificates
+    </pre>
+  </div>
+
+  <div class="row">
+    <button id="btn-init">Enable and Get Token</button>
+    <button id="btn-copy" disabled>Copy Token</button>
+  </div>
+
+  <div class="row">
+    <label>Generated FCM Token</label>
+    <pre id="token">Click “Enable and Get Token”</pre>
+  </div>
+
+  <h3>Save token to user-service</h3>
+  <div class="row">
+    <label>User ID (UUID returned by user-service)</label>
+    <input id="userId" placeholder="e.g. a1bb48d2-659b-4131-9a1c-3e2dfef4b7ac" style="width: 100%;" />
+  </div>
+  <div class="row">
+    <label>API Base (user-service)</label>
+    <input id="apiBase" value="http://localhost:4001" style="width: 100%;" />
+  </div>
+  <div class="row">
+    <button id="btn-save" disabled>PATCH /api/v1/users/:id/push-token</button>
+  </div>
+  <div class="row">
+    <pre id="save-result"></pre>
+  </div>
+
+  <script>
+    // 1) INSERT YOUR FIREBASE WEB CONFIG + VAPID KEY HERE
+    // REAL FIREBASE CONFIG (Do NOT expose service account private keys client-side)
+    // If storageBucket fails, confirm it should be "push-service-2a2ab.appspot.com".
+    const firebaseConfig = {
+      apiKey: "AIzaSyAzW7PDd_pXdVKTk1EtFHgjaz_VQ3xzerA",
+      authDomain: "push-service-2a2ab.firebaseapp.com",
+      projectId: "push-service-2a2ab",
+      // Correct bucket domain form is *.appspot.com
+      storageBucket: "push-service-2a2ab.appspot.com",
+      messagingSenderId: "834550147223",
+      appId: "1:834550147223:web:ba819b5f1a4ec176a3a1d2",
+      measurementId: "G-R35YQSNS0D"
+    };
+    // Public VAPID key from Firebase Console → Cloud Messaging → Web push certificates
+    const VAPID_KEY = "BAJsB_ntbp_HCnCRMsA00A_HhbVNh7oPjlivnsMvJ2mj0P_adGEeZKX-q_ckqtV6BX1--LjOosbPgrmhZl9VKvY";
+
+    // 2) Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const messaging = firebase.messaging();
+
+    // 3) Register service worker
+    async function registerSW() {
+      if (!('serviceWorker' in navigator)) {
+        alert('Service workers not supported in this browser.');
+        return null;
+      }
+      return await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    }
+
+    // 4) Request permission and get token
+    async function getFcmToken() {
+      try {
+        const swReg = await registerSW();
+        if (!swReg) return null;
+
+        const permission = await Notification.requestPermission();
+        console.log('[permission]', permission);
+        if (permission !== 'granted') {
+          alert('Notification permission was not granted.');
+          return null;
+        }
+
+        console.log('[messaging] requesting token with VAPID key');
+        const token = await messaging.getToken({
+          vapidKey: VAPID_KEY,
+          serviceWorkerRegistration: swReg
+        });
+
+        if (!token) {
+          console.warn('[messaging] getToken returned empty value');
+          alert('Failed to get token. Check VAPID key and config.');
+          return null;
+        }
+
+        console.log('[messaging] token acquired', token.substring(0, 25) + '...');
+        return token;
+      } catch (err) {
+        console.error('Error getting token', err);
+        alert('Error getting token: ' + (err?.message || err));
+        return null;
+      }
+    }
+
+    // 5) UI bindings
+    const btnInit = document.getElementById('btn-init');
+    const btnCopy = document.getElementById('btn-copy');
+    const btnSave = document.getElementById('btn-save');
+    const tokenEl = document.getElementById('token');
+    const saveResultEl = document.getElementById('save-result');
+    const userIdEl = document.getElementById('userId');
+    const apiBaseEl = document.getElementById('apiBase');
+
+    let currentToken = null;
+
+    btnInit.onclick = async () => {
+      tokenEl.textContent = 'Requesting permission and token...';
+      const token = await getFcmToken();
+      if (token) {
+        currentToken = token;
+        tokenEl.textContent = token;
+        btnCopy.disabled = false;
+        btnSave.disabled = false;
+      } else {
+        tokenEl.textContent = 'No token. See console and verify config.';
+      }
+    };
+
+    btnCopy.onclick = async () => {
+      if (!currentToken) return;
+      await navigator.clipboard.writeText(currentToken);
+      alert('Token copied to clipboard!');
+    };
+
+    btnSave.onclick = async () => {
+      saveResultEl.textContent = 'Saving...';
+      const userId = userIdEl.value.trim();
+      const apiBase = apiBaseEl.value.trim().replace(/\/$/, '');
+      if (!userId) {
+        alert('Enter a User ID first');
+        return;
+      }
+      if (!currentToken) {
+        alert('No token generated yet');
+        return;
+      }
+      try {
+        const resp = await fetch(`${apiBase}/api/v1/users/${userId}/push-token`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ push_token: currentToken })
+        });
+        const data = await resp.json();
+        saveResultEl.textContent = JSON.stringify(data, null, 2);
+      } catch (e) {
+        saveResultEl.textContent = 'Error: ' + (e?.message || e);
+      }
+    };
+  </script>
+</body>
+</html>

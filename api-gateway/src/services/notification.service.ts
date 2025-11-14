@@ -56,6 +56,15 @@ export class NotificationService {
       throw new BadRequestException(`User has disabled ${dto.notification_type} notifications`);
     }
 
+    // Map payload aliases
+    const context = dto.context || (dto as any).variables || {};
+    const priorityNumeric = (dto as any).priority_num && typeof (dto as any).priority_num === 'number'
+      ? (dto as any).priority_num
+      : ((dto as any).priority && typeof (dto as any).priority === 'number' ? (dto as any).priority : undefined);
+    const priorityLabel = priorityNumeric
+      ? priorityNumeric >= 8 ? 'high' : priorityNumeric >= 4 ? 'medium' : 'low'
+      : (dto.priority || 'medium');
+
     // Build message with new structure
     const message = {
       id: uuidv4(),
@@ -63,8 +72,8 @@ export class NotificationService {
       user_id: dto.user_id,
       notification_type: dto.notification_type,
       template_code: dto.template_code,
-      context: dto.context || {},
-      priority: dto.priority || "medium",
+      context,
+      priority: priorityLabel,
       metadata: dto.metadata || {},
       correlation_id: correlationId,
       retry_count: 0,
@@ -140,14 +149,16 @@ export class NotificationService {
       
       const userServiceUrl = process.env.USER_SERVICE_HOST || 'user-service';
       const userServicePort = process.env.USER_SERVICE_PORT || '4000';
-      const url = `http://${userServiceUrl}:${userServicePort}/users/${userId}`;
+      // Respect global prefix set in user-service
+      const url = `http://${userServiceUrl}:${userServicePort}/api/v1/users/${userId}`;
       
       this.logger.log(`Fetching user from REST API: ${url}`);
       
       try {
         const response = await fetch(url);
         if (!response.ok) {
-          this.logger.error(`User service returned ${response.status}`);
+          const text = await response.text().catch(() => '');
+          this.logger.error(`User service returned ${response.status}: ${text}`);
           return null;
         }
         

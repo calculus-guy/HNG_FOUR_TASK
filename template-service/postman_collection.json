@@ -1,0 +1,81 @@
+{
+  "info": {
+    "name": "Template Service",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "b1d4a2a6-2f5a-4c39-b2ae-f8b5015a5a77"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4002/api/v1" },
+    { "key": "templateId", "value": "REPLACE_WITH_TEMPLATE_ID" },
+    { "key": "templateName", "value": "welcome_email" },
+    { "key": "lang", "value": "en" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/templates/health", "host": ["{{baseUrl}}"], "path": ["templates","health"] }
+      }
+    },
+    {
+      "name": "Create Template",
+      "request": {
+        "method": "POST",
+        "header": [{"key":"Content-Type","value":"application/json"}],
+        "url": { "raw": "{{baseUrl}}/templates", "host": ["{{baseUrl}}"], "path": ["templates"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"template_name\": \"welcome_email\",\n  \"subject\": \"Welcome, {{name}}!\",\n  \"body\": \"<h1>Hello {{name}}</h1><p>Welcome to {{app}}</p>\",\n  \"language\": \"en\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Get By Name",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/templates/by-name/{{templateName}}?lang={{lang}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["templates","by-name","{{templateName}}"],
+          "query": [{"key":"lang","value":"{{lang}}"}]
+        }
+      }
+    },
+    {
+      "name": "Get By ID",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/templates/{{templateId}}", "host": ["{{baseUrl}}"], "path": ["templates","{{templateId}}"] }
+      }
+    },
+    {
+      "name": "Update Template",
+      "request": {
+        "method": "PATCH",
+        "header": [{"key":"Content-Type","value":"application/json"}],
+        "url": { "raw": "{{baseUrl}}/templates/{{templateId}}", "host": ["{{baseUrl}}"], "path": ["templates","{{templateId}}"] },
+        "body": { "mode": "raw", "raw": "{\n  \"subject\": \"Updated Welcome, {{name}}!\"\n}" }
+      }
+    },
+    {
+      "name": "List Versions",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/templates/{{templateId}}/versions", "host": ["{{baseUrl}}"], "path": ["templates","{{templateId}}","versions"] }
+      }
+    },
+    {
+      "name": "Render Template",
+      "request": {
+        "method": "POST",
+        "header": [{"key":"Content-Type","value":"application/json"}],
+        "url": { "raw": "{{baseUrl}}/templates/render", "host": ["{{baseUrl}}"], "path": ["templates","render"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"template_name\": \"{{templateName}}\",\n  \"language\": \"{{lang}}\",\n  \"variables\": { \"name\": \"Jane\", \"app\": \"NotifyX\" }\n}"
+        }
+      }
+    }
+  ]
+}

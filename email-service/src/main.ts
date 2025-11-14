@@ -31,13 +31,16 @@ async function bootstrap() {
     credentials: true,
   });
 
-  const port = parseInt(process.env.PORT || '3003', 10);
+  // Global API prefix
+  app.setGlobalPrefix('api/v1');
+
+  const port = parseInt(process.env.PORT || '4003', 10);
   await app.listen(port, '0.0.0.0');
   
   logger.info(`Email Service started successfully on port ${port}`);
-  logger.info(`Health check available at http://localhost:${port}/api/v1/health`);
-  logger.info(`Metrics available at http://localhost:${port}/api/v1/metrics`);
-  logger.info(`Swagger documentation available at http://localhost:${port}/api/v1/docs`);
+  logger.info(`Health check available at http://localhost:${port}/api/v1/email/health`);
+  logger.info(`Metrics available at http://localhost:${port}/api/v1/email/metrics`);
+  logger.info(`Swagger documentation available at http://localhost:${port}/api/docs`);
 }
 
 bootstrap().catch((error) => {

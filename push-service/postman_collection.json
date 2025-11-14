@@ -1,0 +1,40 @@
+{
+  "info": {
+    "name": "Push Service",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "c8a4f2e1-5f9b-4e8e-8c2a-9a2c4b8f1d77"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3004/api/v1" }
+  ],
+  "item": [
+    { "name": "Health", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] } } },
+    { "name": "Send (single)",
+      "request": {
+        "method": "POST",
+        "header": [{"key":"Content-Type","value":"application/json"}],
+        "url": { "raw": "{{baseUrl}}/push/send", "host": ["{{baseUrl}}"], "path": ["push","send"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user_id\": \"USER_UUID\",\n  \"push_token\": \"PASTE_FCM_TOKEN\",\n  \"title\": \"Welcome\",\n  \"body\": \"Thanks for joining\",\n  \"request_id\": \"req-123\",\n  \"priority\": 5\n}"
+        }
+      }
+    },
+    { "name": "Send (multiple)",
+      "request": {
+        "method": "POST",
+        "header": [{"key":"Content-Type","value":"application/json"}],
+        "url": { "raw": "{{baseUrl}}/push/send-multiple", "host": ["{{baseUrl}}"], "path": ["push","send-multiple"] },
+        "body": { "mode": "raw", "raw": "{\n  \"tokens\": [\"t1\", \"t2\"],\n  \"title\": \"Hello\",\n  \"body\": \"World\"\n}" }
+      }
+    },
+    { "name": "Send (topic)",
+      "request": {
+        "method": "POST",
+        "header": [{"key":"Content-Type","value":"application/json"}],
+        "url": { "raw": "{{baseUrl}}/push/send-topic", "host": ["{{baseUrl}}"], "path": ["push","send-topic"] },
+        "body": { "mode": "raw", "raw": "{\n  \"topic\": \"news-updates\",\n  \"title\": \"Breaking\",\n  \"body\": \"Something happened\"\n}" }
+      }
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "info": {
+    "name": "API Gateway - Notifications",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "a4bd1b37-1830-4b2f-92e2-9f4c5f2b9f1d"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000/api/v1" },
+    { "key": "userId", "value": "REPLACE_WITH_USER_ID" },
+    { "key": "templateCode", "value": "welcome_email" },
+    { "key": "notificationId", "value": "REPLACE_WITH_REQUEST_ID" }
+  ],
+  "item": [
+    {
+      "name": "Send Notification (alias)",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "url": { "raw": "{{baseUrl}}/notifications", "host": ["{{baseUrl}}"], "path": ["notifications"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"request_id\": \"req-123\",\n  \"user_id\": \"{{userId}}\",\n  \"notification_type\": \"email\",\n  \"template_code\": \"{{templateCode}}\",\n  \"variables\": { \"name\": \"Jane\", \"link\": \"https://example.com\" },\n  \"priority_num\": 5,\n  \"metadata\": { \"source\": \"postman\" }\n}"
+        }
+      }
+    },
+    {
+      "name": "Send Notification (/send)",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "url": { "raw": "{{baseUrl}}/notifications/send", "host": ["{{baseUrl}}"], "path": ["notifications","send"] },
+        "body": { "mode": "raw", "raw": "{\n  \"user_id\": \"{{userId}}\",\n  \"notification_type\": \"push\",\n  \"template_code\": \"{{templateCode}}\",\n  \"context\": { \"name\": \"Jane\" },\n  \"priority\": \"medium\"\n}" }
+      }
+    },
+    {
+      "name": "Report Email Status",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "url": { "raw": "{{baseUrl}}/email/status", "host": ["{{baseUrl}}"], "path": ["email","status"] },
+        "body": { "mode": "raw", "raw": "{\n  \"notification_id\": \"{{notificationId}}\",\n  \"status\": \"delivered\",\n  \"timestamp\": \"2025-11-14T12:00:00Z\"\n}" }
+      }
+    },
+    {
+      "name": "Report Push Status",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "url": { "raw": "{{baseUrl}}/push/status", "host": ["{{baseUrl}}"], "path": ["push","status"] },
+        "body": { "mode": "raw", "raw": "{\n  \"notification_id\": \"{{notificationId}}\",\n  \"status\": \"failed\",\n  \"error\": \"Invalid token\"\n}" }
+      }
+    },
+    {
+      "name": "Get Notification Status",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/notifications/status/{{notificationId}}", "host": ["{{baseUrl}}"], "path": ["notifications","status","{{notificationId}}"] }
+      }
+    }
+  ]
+}
